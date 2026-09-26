@@ -1,0 +1,25 @@
+# hiok CLI releases: one archive per platform, named hiok_<version>_<os>_<arch>,
+# which is what the GitHub Action and the Azure DevOps task download.
+version: 2
+project_name: hiok
+builds:
+  - main: ./cmd/hiok
+    binary: hiok
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/HIOK-Official/hiok-cli/internal/cli.Version={{ .Version }}
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+archives:
+  - name_template: 'hiok_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+checksum:
+  name_template: 'hiok_{{ .Version }}_SHA256SUMS'
+release:
+  github:
+    owner: HIOK-Official
+    name: hiok-cli
