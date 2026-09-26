@@ -601,6 +601,19 @@ func vmDeployCommands() []Command {
 	return []Command{
 		power("start"), power("stop"), power("restart"),
 		{
+			Name: "delete", Summary: "Delete a virtual machine and its disk",
+			Run: func(ctx context.Context, app *App, args []string) error {
+				if len(args) != 1 {
+					return fmt.Errorf("usage: hiok vm delete <name>")
+				}
+				if _, err := post(app, ctx, "DELETE", "/api/VirtualMachine/destroy-vm", map[string]any{"vmName": args[0]}); err != nil {
+					return err
+				}
+				app.Print.Message("%s deleted.", args[0])
+				return nil
+			},
+		},
+		{
 			Name: "ssh", Summary: "SSH to a VM with its platform key — interactive, a --command, or a --script file",
 			Flags: func(fs *flag.FlagSet) {
 				fs.StringVar(&command, "command", "", "run this and exit with its status")

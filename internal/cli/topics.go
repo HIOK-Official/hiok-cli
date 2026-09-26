@@ -159,6 +159,8 @@ func authTopic() Topic {
 // ── virtual machines ────────────────────────────────────────────────────────
 
 func vmTopic() Topic {
+	var vmNetwork, vmPassword string
+	var vmPublic bool
 	var name, region, image string
 	var vcpus int
 	var ramGb float64
@@ -187,6 +189,9 @@ func vmTopic() Topic {
 					fs.StringVar(&image, "image", "ubuntu-24.04", "base image")
 					fs.IntVar(&vcpus, "vcpus", 1, "virtual CPUs")
 					fs.Float64Var(&ramGb, "ram", 1, "memory in GB")
+					fs.StringVar(&vmNetwork, "vnet", "", "virtual network (default: \"default\", created if missing)")
+					fs.BoolVar(&vmPublic, "public", true, "reachable from the internet (IPv6, and SSH over IPv4 through the region host)")
+					fs.StringVar(&vmPassword, "password", "", "sign in with this password instead of a generated SSH key")
 				},
 				Run: func(ctx context.Context, app *App, args []string) error {
 					if err := app.RequireToken(); err != nil {
@@ -195,8 +200,56 @@ func vmTopic() Topic {
 					if name == "" {
 						return fmt.Errorf("--name is required")
 					}
-					if err := app.Client.CreateVirtualMachine(ctx, name, app.Region(region), image, vcpus, ramGb); err != nil {
+					// A VM needs a network. Without --vnet use "default", and make it when
+					// this account has none yet — the first VM should not need a second step.
+					network := vmNetwork
+					if network == "" {
+						network = "default"
+						nets, err := app.Client.VirtualNetworks(ctx)
+						if err != nil {
+							return err
+						}
+						found := false
+						for _, n := range nets {
+							if strings.EqualFold(str(n, "name", "vnetName"), network) {
+								found = true
+							}
+						}
+						if !found {
+							app.Print.Message("Creating virtual network %q (10.30.0.0/16)…", network)
+							if _, err := app.Client.CreateVirtualNetwork(ctx, hiok.CreateVirtualNetworkRequest{
+								Name: network, AddressSpace: "10.30.0.0/16", Region: app.Region(region),
+							}); err != nil {
+								return fmt.Errorf("creating the default network: %w", err)
+							}
+						}
+					}
+					if img := image; img == "ubuntu-24.04" {
+						image = "ubuntu-24.04-amd64"
+					}
+					body := map[string]any{
+						"vmName": name, "regions": []string{app.Region(region)}, "sourceFilePath": image,
+						"vcpuCount": vcpus, "ramSize": ramGb, "networkName": network,
+						// A key the platform keeps, so `hiok vm ssh` works without anyone copying one.
+						"authType": "ssh", "generateSshKey": true, "username": "hiok",
+					}
+					if vmPassword != "" {
+						body["authType"], body["generateSshKey"], body["password"] = "password", false, vmPassword
+					}
+					if err := app.Client.Do(ctx, "POST", "/api/VirtualMachine/create-vm", body, nil, true); err != nil {
 						return err
+					}
+					if vmPublic {
+						vms, err := app.Client.VirtualMachines(ctx)
+						if err == nil {
+							for _, v := range vms {
+								if strings.EqualFold(str(v, "name", "vmName"), name) && str(v, "id") != "" {
+									if _, err := post(app, ctx, "PUT", "/api/network-access/virtualmachine/"+str(v, "id"), map[string]any{"accessMode": "public"}); err != nil {
+										app.Print.Message("Created, but could not make it public: %v", err)
+									}
+								}
+							}
+						}
 					}
 					app.Print.Message("Machine %q requested in %s.", name, app.Region(region))
 					return nil
