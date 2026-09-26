@@ -1,0 +1,18 @@
+# CircleCI with HIOK Cloud. Project settings → Environment variables:
+# HIOK_CLIENT_ID, HIOK_CLIENT_SECRET.
+version: 2.1
+jobs:
+  deploy:
+    docker:
+      - image: ghcr.io/hiok-official/hiok:latest
+    environment:
+      HIOK_ENDPOINT: https://hiokcloud.com
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: |
+          IMAGE=$(hiok registry push my-registry --build . --repository web | tail -1)
+          hiok app deploy web --image "$IMAGE"
+workflows:
+  deploy:
+    jobs: [deploy]

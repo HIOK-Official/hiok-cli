@@ -1,0 +1,68 @@
+# HIOK Cloud jobs for GitLab CI. Include it, then `extends:` the job you need:
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/HIOK-Official/hiok-cli/main/ci/hiok.gitlab-ci.yml
+#
+# Settings → CI/CD → Variables (masked): HIOK_CLIENT_ID, HIOK_CLIENT_SECRET — a
+# service principal from HIOK ID → Service principals. Values a job produces
+# (IMAGE, REVISION, RUN_ID, …) are passed to later jobs as a dotenv report.
+
+.hiok:
+  image: ghcr.io/hiok-official/hiok:latest
+  variables:
+    HIOK_ENDPOINT: https://hiokcloud.com
+    HIOK_OUTPUT_ENV: hiok.env
+  artifacts:
+    reports:
+      dotenv: hiok.env
+
+# Build a Docker image and push it to a HIOK registry (IMAGE for later jobs).
+#   variables: HIOK_REGISTRY (required), HIOK_REPOSITORY, HIOK_BUILD_CONTEXT, HIOK_TAG
+.hiok-registry-push:
+  extends: .hiok
+  services: [docker:27-dind]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  script:
+    - hiok registry push "$HIOK_REGISTRY" --build "${HIOK_BUILD_CONTEXT:-.}" ${HIOK_REPOSITORY:+--repository "$HIOK_REPOSITORY"} ${HIOK_TAG:+--tag "$HIOK_TAG"}
+
+# Roll a container app onto IMAGE (from the push job) and wait until it serves.
+#   variables: HIOK_APP (required)
+.hiok-app-deploy:
+  extends: .hiok
+  script:
+    - hiok app deploy "$HIOK_APP" --image "$IMAGE"
+
+# Create or replace a container with IMAGE, keeping its ports and environment.
+#   variables: HIOK_CONTAINER (required), HIOK_PORTS
+.hiok-container-deploy:
+  extends: .hiok
+  script:
+    - hiok docker deploy "$HIOK_CONTAINER" --image "$IMAGE" ${HIOK_PORTS:+--ports "$HIOK_PORTS"}
+
+# Run a Container Job and fail when it fails.
+#   variables: HIOK_JOB (required), HIOK_WAIT (default 30m)
+.hiok-job-run:
+  extends: .hiok
+  script:
+    - hiok job run "$HIOK_JOB" --wait "${HIOK_WAIT:-30m}"
+
+# Run a script from the repository on a VM over SSH.
+#   variables: HIOK_VM (required), HIOK_SCRIPT (required, a path)
+.hiok-vm-run:
+  extends: .hiok
+  script:
+    - hiok vm ssh "$HIOK_VM" --script "$HIOK_SCRIPT"
+
+# Upload a folder (e.g. build output) to storage.
+#   variables: HIOK_ACCOUNT, HIOK_CONTAINER_NAME, HIOK_PATH (required), HIOK_PREFIX
+.hiok-storage-upload:
+  extends: .hiok
+  script:
+    - hiok storage upload "$HIOK_ACCOUNT" "$HIOK_CONTAINER_NAME" "$HIOK_PATH" ${HIOK_PREFIX:+--prefix "$HIOK_PREFIX"}
+
+# Key Vault secrets inside a job (never written to artifacts):
+#   script:
+#     - eval "$(hiok keyvault export my-vault --format env)"
+#     - ./deploy.sh      # sees DB_PASSWORD, API_TOKEN, …

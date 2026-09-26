@@ -1,0 +1,19 @@
+// Jenkins with HIOK Cloud. Credentials: a "Username with password" credential
+// "hiok-sp" holding a service principal's client ID and secret.
+pipeline {
+  agent { docker { image 'ghcr.io/hiok-official/hiok:latest'; args '-v /var/run/docker.sock:/var/run/docker.sock' } }
+  environment { HIOK_ENDPOINT = 'https://hiokcloud.com' }
+  stages {
+    stage('Deploy') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'hiok-sp', usernameVariable: 'HIOK_CLIENT_ID', passwordVariable: 'HIOK_CLIENT_SECRET')]) {
+          sh '''
+            IMAGE=$(hiok registry push my-registry --build . --repository web | tail -1)
+            hiok app deploy web --image "$IMAGE"
+            hiok vm ssh app-01 --script scripts/post-deploy.sh
+          '''
+        }
+      }
+    }
+  }
+}

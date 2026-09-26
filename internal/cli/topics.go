@@ -11,7 +11,7 @@ import (
 )
 
 func topics() []Topic {
-	return []Topic{
+	return withDeployCommands([]Topic{
 		authTopic(),
 		apiTopic(),
 		vmTopic(),
@@ -39,7 +39,7 @@ func topics() []Topic {
 		relationalTopic("sqlserver", "SQL Server instances", "/api/SqlServerDatabase"),
 		serviceBusTopic(),
 		streamJobTopic(),
-	}
+	})
 }
 
 // ── auth ────────────────────────────────────────────────────────────────────

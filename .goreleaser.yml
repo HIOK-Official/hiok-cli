@@ -23,3 +23,25 @@ release:
   github:
     owner: HIOK-Official
     name: hiok-cli
+
+# ghcr.io/hiok-official/hiok:<version> and :latest, for container-based CI.
+dockers:
+  - image_templates: ['ghcr.io/hiok-official/hiok:{{ .Version }}-amd64']
+    dockerfile: Dockerfile
+    use: buildx
+    goarch: amd64
+    build_flag_templates: ['--platform=linux/amd64', '--build-arg=TARGETARCH=amd64',
+      '--label=org.opencontainers.image.source=https://github.com/HIOK-Official/hiok-cli',
+      '--label=org.opencontainers.image.version={{ .Version }}']
+  - image_templates: ['ghcr.io/hiok-official/hiok:{{ .Version }}-arm64']
+    dockerfile: Dockerfile
+    use: buildx
+    goarch: arm64
+    build_flag_templates: ['--platform=linux/arm64', '--build-arg=TARGETARCH=arm64',
+      '--label=org.opencontainers.image.source=https://github.com/HIOK-Official/hiok-cli',
+      '--label=org.opencontainers.image.version={{ .Version }}']
+docker_manifests:
+  - name_template: 'ghcr.io/hiok-official/hiok:{{ .Version }}'
+    image_templates: ['ghcr.io/hiok-official/hiok:{{ .Version }}-amd64', 'ghcr.io/hiok-official/hiok:{{ .Version }}-arm64']
+  - name_template: 'ghcr.io/hiok-official/hiok:latest'
+    image_templates: ['ghcr.io/hiok-official/hiok:{{ .Version }}-amd64', 'ghcr.io/hiok-official/hiok:{{ .Version }}-arm64']

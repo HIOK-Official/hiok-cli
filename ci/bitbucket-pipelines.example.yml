@@ -1,0 +1,14 @@
+# Bitbucket Pipelines with HIOK Cloud. Repository settings → Repository variables
+# (secured): HIOK_CLIENT_ID, HIOK_CLIENT_SECRET.
+image: ghcr.io/hiok-official/hiok:latest
+pipelines:
+  branches:
+    main:
+      - step:
+          name: Build, push, deploy
+          services: [docker]
+          script:
+            - export HIOK_ENDPOINT=https://hiokcloud.com
+            - IMAGE=$(hiok registry push my-registry --build . --repository web | tail -1)
+            - hiok app deploy web --image "$IMAGE"
+            - hiok job run db-migrate --wait 15m
