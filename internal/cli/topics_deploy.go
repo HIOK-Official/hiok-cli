@@ -39,7 +39,7 @@ func withDeployCommands(ts []Topic) []Topic {
 	for i := range ts {
 		ts[i].Commands = append(ts[i].Commands, extra[ts[i].Name]...)
 	}
-	return append(ts, jobTopic())
+	return append(ts, jobTopic(), idTopic(), apiKeyTopic())
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────────
