@@ -793,6 +793,30 @@
  },
  {
   "group": "ApiManagement",
+  "name": "DeleteProduct",
+  "http": "DELETE",
+  "path": "/api/apim/products/{id}",
+  "summary": "",
+  "python": "client.api.api_management.delete_product()",
+  "dotnet": "client.Api.ApiManagement.DeleteProductAsync()",
+  "java": "client.api().apiManagement().deleteProduct()",
+  "typescript": "client.api.apiManagement.deleteProduct()",
+  "go": "client.API().ApiManagement.DeleteProduct(ctx)"
+ },
+ {
+  "group": "ApiManagement",
+  "name": "DeleteSub",
+  "http": "DELETE",
+  "path": "/api/apim/subscriptions/{id}",
+  "summary": "",
+  "python": "client.api.api_management.delete_sub()",
+  "dotnet": "client.Api.ApiManagement.DeleteSubAsync()",
+  "java": "client.api().apiManagement().deleteSub()",
+  "typescript": "client.api.apiManagement.deleteSub()",
+  "go": "client.API().ApiManagement.DeleteSub(ctx)"
+ },
+ {
+  "group": "ApiManagement",
   "name": "Gateway",
   "http": "GET",
   "path": "/api/apim/gateway/{apiPath}/{rest}",
@@ -2724,6 +2748,30 @@
   "go": "client.API().Downloads.Sdk(ctx)"
  },
  {
+  "group": "Downloads",
+  "name": "SdkPackage",
+  "http": "GET",
+  "path": "/api/downloads/sdk/{file}",
+  "summary": "",
+  "python": "client.api.downloads.sdk_package()",
+  "dotnet": "client.Api.Downloads.SdkPackageAsync()",
+  "java": "client.api().downloads().sdkPackage()",
+  "typescript": "client.api.downloads.sdkPackage()",
+  "go": "client.API().Downloads.SdkPackage(ctx)"
+ },
+ {
+  "group": "Downloads",
+  "name": "SdkPackageList",
+  "http": "GET",
+  "path": "/api/downloads/sdk",
+  "summary": "",
+  "python": "client.api.downloads.sdk_package_list()",
+  "dotnet": "client.Api.Downloads.SdkPackageListAsync()",
+  "java": "client.api().downloads().sdkPackageList()",
+  "typescript": "client.api.downloads.sdkPackageList()",
+  "go": "client.API().Downloads.SdkPackageList(ctx)"
+ },
+ {
   "group": "Dps",
   "name": "Create",
   "http": "POST",
@@ -3502,6 +3550,78 @@
   "java": "client.api().infrastructure().setReverse()",
   "typescript": "client.api.infrastructure.setReverse()",
   "go": "client.API().Infrastructure.SetReverse(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "Create",
+  "http": "POST",
+  "path": "/api/integrations",
+  "summary": "",
+  "python": "client.api.integrations.create()",
+  "dotnet": "client.Api.Integrations.CreateAsync()",
+  "java": "client.api().integrations().create()",
+  "typescript": "client.api.integrations.create()",
+  "go": "client.API().Integrations.Create(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "Delete",
+  "http": "DELETE",
+  "path": "/api/integrations/{id}",
+  "summary": "",
+  "python": "client.api.integrations.delete()",
+  "dotnet": "client.Api.Integrations.DeleteAsync()",
+  "java": "client.api().integrations().delete()",
+  "typescript": "client.api.integrations.delete_()",
+  "go": "client.API().Integrations.Delete(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "Get",
+  "http": "GET",
+  "path": "/api/integrations/{id}",
+  "summary": "",
+  "python": "client.api.integrations.get()",
+  "dotnet": "client.Api.Integrations.GetAsync()",
+  "java": "client.api().integrations().get()",
+  "typescript": "client.api.integrations.get()",
+  "go": "client.API().Integrations.Get(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "List",
+  "http": "GET",
+  "path": "/api/integrations",
+  "summary": "",
+  "python": "client.api.integrations.list()",
+  "dotnet": "client.Api.Integrations.ListAsync()",
+  "java": "client.api().integrations().list()",
+  "typescript": "client.api.integrations.list()",
+  "go": "client.API().Integrations.List(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "Test",
+  "http": "POST",
+  "path": "/api/integrations/{id}/test",
+  "summary": "",
+  "python": "client.api.integrations.test()",
+  "dotnet": "client.Api.Integrations.TestAsync()",
+  "java": "client.api().integrations().test()",
+  "typescript": "client.api.integrations.test()",
+  "go": "client.API().Integrations.Test(ctx)"
+ },
+ {
+  "group": "Integrations",
+  "name": "Update",
+  "http": "PUT",
+  "path": "/api/integrations/{id}",
+  "summary": "",
+  "python": "client.api.integrations.update()",
+  "dotnet": "client.Api.Integrations.UpdateAsync()",
+  "java": "client.api().integrations().update()",
+  "typescript": "client.api.integrations.update()",
+  "go": "client.API().Integrations.Update(ctx)"
  },
  {
   "group": "IoTDeviceGateway",
@@ -5017,6 +5137,18 @@
  },
  {
   "group": "OAuth",
+  "name": "GetClientToken",
+  "http": "POST",
+  "path": "/api/OAuth/token/client",
+  "summary": "",
+  "python": "client.api.o_auth.get_client_token()",
+  "dotnet": "client.Api.OAuth.GetClientTokenAsync()",
+  "java": "client.api().oAuth().getClientToken()",
+  "typescript": "client.api.oAuth.getClientToken()",
+  "go": "client.API().OAuth.GetClientToken(ctx)"
+ },
+ {
+  "group": "OAuth",
   "name": "GetToken",
   "http": "POST",
   "path": "/api/OAuth/token",
@@ -6418,6 +6550,66 @@
   "java": "client.api().serviceBus().updateQueue()",
   "typescript": "client.api.serviceBus.updateQueue()",
   "go": "client.API().ServiceBus.UpdateQueue(ctx)"
+ },
+ {
+  "group": "Slack",
+  "name": "Command",
+  "http": "POST",
+  "path": "/api/integrations/slack/command",
+  "summary": "",
+  "python": "client.api.slack.command()",
+  "dotnet": "client.Api.Slack.CommandAsync()",
+  "java": "client.api().slack().command()",
+  "typescript": "client.api.slack.command()",
+  "go": "client.API().Slack.Command(ctx)"
+ },
+ {
+  "group": "Slack",
+  "name": "ConfigInfo",
+  "http": "GET",
+  "path": "/api/integrations/slack/config",
+  "summary": "",
+  "python": "client.api.slack.config_info()",
+  "dotnet": "client.Api.Slack.ConfigInfoAsync()",
+  "java": "client.api().slack().configInfo()",
+  "typescript": "client.api.slack.configInfo()",
+  "go": "client.API().Slack.ConfigInfo(ctx)"
+ },
+ {
+  "group": "Slack",
+  "name": "Install",
+  "http": "GET",
+  "path": "/api/integrations/slack/install",
+  "summary": "",
+  "python": "client.api.slack.install()",
+  "dotnet": "client.Api.Slack.InstallAsync()",
+  "java": "client.api().slack().install()",
+  "typescript": "client.api.slack.install()",
+  "go": "client.API().Slack.Install(ctx)"
+ },
+ {
+  "group": "Slack",
+  "name": "Link",
+  "http": "POST",
+  "path": "/api/integrations/slack/link",
+  "summary": "",
+  "python": "client.api.slack.link()",
+  "dotnet": "client.Api.Slack.LinkAsync()",
+  "java": "client.api().slack().link()",
+  "typescript": "client.api.slack.link()",
+  "go": "client.API().Slack.Link(ctx)"
+ },
+ {
+  "group": "Slack",
+  "name": "OAuth",
+  "http": "GET",
+  "path": "/api/integrations/slack/oauth",
+  "summary": "",
+  "python": "client.api.slack.o_auth()",
+  "dotnet": "client.Api.Slack.OAuthAsync()",
+  "java": "client.api().slack().oAuth()",
+  "typescript": "client.api.slack.oAuth()",
+  "go": "client.API().Slack.OAuth(ctx)"
  },
  {
   "group": "SqlServerDatabase",
