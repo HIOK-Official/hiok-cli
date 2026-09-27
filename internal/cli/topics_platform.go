@@ -20,16 +20,13 @@ import (
 
 // get is a read that prints a table of whatever came back under "data".
 func get(app *App, ctx context.Context, path string, columns ...string) error {
-	if err := app.RequireToken(); err != nil {
+	// Lists come back as a bare array, {data:[…]} or {data:{items:[…]}}
+	// depending on the controller; listItems reads all three.
+	items, err := listItems(app, ctx, path)
+	if err != nil {
 		return err
 	}
-	var resp struct {
-		Data []map[string]any `json:"data"`
-	}
-	if err := app.Client.Do(ctx, "GET", path, nil, &resp, true); err != nil {
-		return err
-	}
-	return app.Print.Table(resp.Data, columns...)
+	return app.Print.Table(items, columns...)
 }
 
 // post sends a request and reports what it said, which for a create is usually

@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -73,6 +74,26 @@ func listItems(app *App, ctx context.Context, path string) ([]map[string]any, er
 		}
 	}
 	return nil, fmt.Errorf("unexpected answer from %s", path)
+}
+
+// isGUID reports whether a reference is already an id rather than a name.
+func isGUID(ref string) bool {
+	return guidPattern.MatchString(ref)
+}
+
+var guidPattern = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// idOf returns the id of the item a name or id refers to, for commands whose
+// API path needs the id but whose users know the name.
+func idOf(app *App, ctx context.Context, listPath, what, ref string) (string, error) {
+	if isGUID(ref) {
+		return ref, nil
+	}
+	it, err := resolve(app, ctx, listPath, what, ref, "name")
+	if err != nil {
+		return "", err
+	}
+	return str(it, "id"), nil
 }
 
 // resolve finds one item by id or by any of the given name fields.

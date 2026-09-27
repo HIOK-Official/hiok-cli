@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	hiok "github.com/HIOK-Official/hiok-sdk/go"
 )
@@ -81,7 +82,7 @@ func keyVaultTopic() Topic {
 					if len(args) == 0 {
 						return fmt.Errorf("usage: hiok keyvault delete <vault-id>")
 					}
-					if err := app.Client.DeleteKeyVault(ctx, args[0]); err != nil {
+					if err := app.Client.DeleteKeyVault(ctx, vaultRef(ctx, app, args[0], false)); err != nil {
 						return err
 					}
 					app.Print.Message("Vault soft-deleted; it stays recoverable until its retention window ends.")
@@ -97,7 +98,7 @@ func keyVaultTopic() Topic {
 					if len(args) == 0 {
 						return fmt.Errorf("usage: hiok keyvault recover <vault-id>")
 					}
-					result, err := app.Client.RecoverKeyVault(ctx, args[0])
+					result, err := app.Client.RecoverKeyVault(ctx, vaultRef(ctx, app, args[0], true))
 					if err != nil {
 						return err
 					}
@@ -122,7 +123,7 @@ func keyVaultTopic() Topic {
 						app.Print.Message("Nothing was purged.")
 						return nil
 					}
-					if err := app.Client.PurgeKeyVault(ctx, args[0]); err != nil {
+					if err := app.Client.PurgeKeyVault(ctx, vaultRef(ctx, app, args[0], true)); err != nil {
 						return err
 					}
 					app.Print.Message("Vault purged.")
@@ -138,7 +139,7 @@ func keyVaultTopic() Topic {
 					if len(args) == 0 {
 						return fmt.Errorf("usage: hiok keyvault items <vault-id>")
 					}
-					items, err := app.Client.KeyVaultItems(ctx, args[0])
+					items, err := app.Client.KeyVaultItems(ctx, vaultRef(ctx, app, args[0], false))
 					if err != nil {
 						return err
 					}
@@ -163,7 +164,7 @@ func keyVaultTopic() Topic {
 					if !generate && value == "" {
 						return fmt.Errorf("pass --value, or --generate to have one made")
 					}
-					result, err := app.Client.SetSecret(ctx, args[0], hiok.SetSecretRequest{
+					result, err := app.Client.SetSecret(ctx, vaultRef(ctx, app, args[0], false), hiok.SetSecretRequest{
 						Name: args[1], ItemType: name, Value: value, Generate: generate, Size: size,
 					})
 					if err != nil {
@@ -185,7 +186,7 @@ func keyVaultTopic() Topic {
 					if len(args) > 2 {
 						version = args[2]
 					}
-					item, err := app.Client.GetSecret(ctx, args[0], args[1], version)
+					item, err := app.Client.GetSecret(ctx, vaultRef(ctx, app, args[0], false), args[1], version)
 					if err != nil {
 						return err
 					}
@@ -209,7 +210,7 @@ func keyVaultTopic() Topic {
 					if len(args) < 2 {
 						return fmt.Errorf("usage: hiok keyvault versions <vault-id> <item-name>")
 					}
-					versions, err := app.Client.SecretVersions(ctx, args[0], args[1])
+					versions, err := app.Client.SecretVersions(ctx, vaultRef(ctx, app, args[0], false), args[1])
 					if err != nil {
 						return err
 					}
@@ -225,7 +226,7 @@ func keyVaultTopic() Topic {
 					if len(args) < 2 {
 						return fmt.Errorf("usage: hiok keyvault delete-item <vault-id> <item-name>")
 					}
-					if err := app.Client.DeleteSecret(ctx, args[0], args[1]); err != nil {
+					if err := app.Client.DeleteSecret(ctx, vaultRef(ctx, app, args[0], false), args[1]); err != nil {
 						return err
 					}
 					app.Print.Message("Item deleted; it stays recoverable until the vault is purged.")
@@ -392,4 +393,29 @@ func certificateTopic() Topic {
 			},
 		},
 	}
+}
+
+// vaultRef turns a vault name into its id, so every keyvault command takes the
+// name people know it by as well as the id. Anything that does not match is
+// passed through unchanged and the API's own answer explains it.
+func vaultRef(ctx context.Context, app *App, ref string, deleted bool) string {
+	if isGUID(ref) {
+		return ref
+	}
+	var vaults []map[string]any
+	var err error
+	if deleted {
+		vaults, err = app.Client.DeletedKeyVaults(ctx)
+	} else {
+		vaults, err = app.Client.KeyVaults(ctx)
+	}
+	if err != nil {
+		return ref
+	}
+	for _, v := range vaults {
+		if strings.EqualFold(str(v, "name", "vaultName"), ref) {
+			return str(v, "id")
+		}
+	}
+	return ref
 }

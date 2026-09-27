@@ -199,9 +199,11 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) == 0 {
-						return fmt.Errorf("usage: hiok iot devices <hub-id>")
+						return fmt.Errorf("usage: hiok iot devices <hub>")
 					}
-					devices, err := app.Client.IoTDevices(ctx, args[0])
+					// Read with the shape-tolerant lister: this endpoint answers
+					// {data:[…]}, which the SDK's bare-array method cannot decode.
+					devices, err := listItems(app, ctx, "/api/IoTHubDevice/iothub/"+hubRef(ctx, app, args[0])+"/devices")
 					if err != nil {
 						return err
 					}
@@ -215,9 +217,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot device-create <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot device-create <hub> <device-id>")
 					}
-					result, err := app.Client.CreateIoTDevice(ctx, args[0], args[1])
+					result, err := app.Client.CreateIoTDevice(ctx, hubRef(ctx, app, args[0]), args[1])
 					if err != nil {
 						return err
 					}
@@ -231,9 +233,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot device-delete <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot device-delete <hub> <device-id>")
 					}
-					if err := app.Client.DeleteIoTDevice(ctx, args[0], args[1]); err != nil {
+					if err := app.Client.DeleteIoTDevice(ctx, hubRef(ctx, app, args[0]), args[1]); err != nil {
 						return err
 					}
 					app.Print.Message("Device deleted.")
@@ -247,9 +249,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot connection-string <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot connection-string <hub> <device-id>")
 					}
-					result, err := app.Client.IoTDeviceConnectionString(ctx, args[0], args[1])
+					result, err := app.Client.IoTDeviceConnectionString(ctx, hubRef(ctx, app, args[0]), args[1])
 					if err != nil {
 						return err
 					}
@@ -266,13 +268,13 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot rotate-key <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot rotate-key <hub> <device-id>")
 					}
 					if !confirm("Rotate the key? The previous one stops working immediately.", assumeYes) {
 						app.Print.Message("Key unchanged.")
 						return nil
 					}
-					result, err := app.Client.RegenerateIoTDeviceKey(ctx, args[0], args[1])
+					result, err := app.Client.RegenerateIoTDeviceKey(ctx, hubRef(ctx, app, args[0]), args[1])
 					if err != nil {
 						return err
 					}
@@ -286,9 +288,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot twin <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot twin <hub> <device-id>")
 					}
-					twin, err := app.Client.IoTDeviceTwin(ctx, args[0], args[1])
+					twin, err := app.Client.IoTDeviceTwin(ctx, hubRef(ctx, app, args[0]), args[1])
 					if err != nil {
 						return err
 					}
@@ -306,9 +308,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 || payload == "" {
-						return fmt.Errorf(`usage: hiok iot send <hub-id> <device-id> --payload '{"temp":21}'`)
+						return fmt.Errorf(`usage: hiok iot send <hub> <device-id> --payload '{"temp":21}'`)
 					}
-					result, err := app.Client.SendIoTTelemetry(ctx, args[0], args[1], payload, properties)
+					result, err := app.Client.SendIoTTelemetry(ctx, hubRef(ctx, app, args[0]), args[1], payload, properties)
 					if err != nil {
 						return err
 					}
@@ -326,9 +328,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 || payload == "" {
-						return fmt.Errorf(`usage: hiok iot c2d <hub-id> <device-id> --payload '{"cmd":"reboot"}'`)
+						return fmt.Errorf(`usage: hiok iot c2d <hub> <device-id> --payload '{"cmd":"reboot"}'`)
 					}
-					result, err := app.Client.SendIoTCloudToDevice(ctx, args[0], args[1], payload, properties)
+					result, err := app.Client.SendIoTCloudToDevice(ctx, hubRef(ctx, app, args[0]), args[1], payload, properties)
 					if err != nil {
 						return err
 					}
@@ -342,9 +344,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) < 2 {
-						return fmt.Errorf("usage: hiok iot messages <hub-id> <device-id>")
+						return fmt.Errorf("usage: hiok iot messages <hub> <device-id>")
 					}
-					messages, err := app.Client.IoTMessages(ctx, args[0], args[1])
+					messages, err := app.Client.IoTMessages(ctx, hubRef(ctx, app, args[0]), args[1])
 					if err != nil {
 						return err
 					}
@@ -358,9 +360,9 @@ func iotTopic() Topic {
 						return err
 					}
 					if len(args) == 0 {
-						return fmt.Errorf("usage: hiok iot monitor <hub-id>")
+						return fmt.Errorf("usage: hiok iot monitor <hub>")
 					}
-					stats, err := app.Client.IoTHubMonitoring(ctx, args[0])
+					stats, err := app.Client.IoTHubMonitoring(ctx, hubRef(ctx, app, args[0]))
 					if err != nil {
 						return err
 					}
@@ -398,7 +400,7 @@ func dpsTopic() Topic {
 					fs.StringVar(&name, "name", "", "enrollment name")
 					fs.StringVar(&enrollmentType, "type", "individual", "individual or group")
 					fs.StringVar(&registrationID, "registration-id", "", "the id an individual device presents")
-					fs.StringVar(&hubID, "hub", "", "hub devices are provisioned into")
+					fs.StringVar(&hubID, "hub", "", "hub devices are provisioned into (name or id)")
 					fs.StringVar(&prefix, "prefix", "", "prefix for provisioned device names")
 				},
 				Run: func(ctx context.Context, app *App, args []string) error {
@@ -410,7 +412,7 @@ func dpsTopic() Topic {
 					}
 					result, err := app.Client.CreateDpsEnrollment(ctx, hiok.CreateDpsEnrollmentRequest{
 						Name: name, EnrollmentType: enrollmentType, RegistrationID: registrationID,
-						TargetHubID: hubID, DeviceIDPrefix: prefix,
+						TargetHubID: hubRef(ctx, app, hubID), DeviceIDPrefix: prefix,
 					})
 					if err != nil {
 						return err
@@ -572,4 +574,15 @@ func publicIPTopic() Topic {
 			},
 		},
 	}
+}
+
+// hubRef turns an IoT hub name into its id; ids and unknown names pass through.
+func hubRef(ctx context.Context, app *App, ref string) string {
+	if isGUID(ref) {
+		return ref
+	}
+	if id, err := idOf(app, ctx, "/api/IoTHub/iothubs", "IoT hub", ref); err == nil && id != "" {
+		return id
+	}
+	return ref
 }

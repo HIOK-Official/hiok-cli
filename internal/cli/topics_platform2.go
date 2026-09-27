@@ -46,7 +46,7 @@ func storageTopic() Topic {
 			{
 				Name: "ls", Summary: "List what is in an account",
 				Flags: func(fs *flag.FlagSet) {
-					fs.StringVar(&id, "id", "", "storage account id")
+					fs.StringVar(&id, "id", "", "storage account name or id")
 					fs.StringVar(&prefix, "path", "", "folder to list")
 				},
 				Run: func(ctx context.Context, app *App, args []string) error {
@@ -56,11 +56,15 @@ func storageTopic() Topic {
 					if id == "" {
 						return fmt.Errorf("--id is required")
 					}
+					id, err := idOf(app, ctx, "/api/StorageAccount", "storage account", id)
+					if err != nil {
+						return err
+					}
 					path := "/api/StorageAccount/" + id + "/items"
 					if prefix != "" {
 						path += "?path=" + prefix
 					}
-					return get(app, ctx, path, "name", "type", "size", "modifiedAt")
+					return get(app, ctx, path, "name", "mimeType", "sizeDisplay", "updatedAt")
 				},
 			},
 			deleteByIDCommand("delete", "Delete a storage account", "/api/StorageAccount"),
@@ -212,13 +216,17 @@ func serviceBusTopic() Topic {
 			},
 			{
 				Name: "queues", Summary: "List the queues in a namespace",
-				Flags: func(fs *flag.FlagSet) { fs.StringVar(&namespaceID, "namespace", "", "namespace id") },
+				Flags: func(fs *flag.FlagSet) { fs.StringVar(&namespaceID, "namespace", "", "namespace name or id") },
 				Run: func(ctx context.Context, app *App, args []string) error {
 					if namespaceID == "" && len(args) > 0 {
 						namespaceID = args[0]
 					}
 					if namespaceID == "" {
 						return fmt.Errorf("--namespace is required")
+					}
+					namespaceID, err := idOf(app, ctx, "/api/ServiceBus/namespaces", "namespace", namespaceID)
+					if err != nil {
+						return err
 					}
 					return get(app, ctx,
 						"/api/ServiceBus/namespaces/"+namespaceID+"/queues",
@@ -228,12 +236,16 @@ func serviceBusTopic() Topic {
 			{
 				Name: "create-queue", Summary: "Create a queue",
 				Flags: func(fs *flag.FlagSet) {
-					fs.StringVar(&namespaceID, "namespace", "", "namespace id")
+					fs.StringVar(&namespaceID, "namespace", "", "namespace name or id")
 					fs.StringVar(&name, "name", "", "queue name")
 				},
 				Run: func(ctx context.Context, app *App, args []string) error {
 					if namespaceID == "" || name == "" {
 						return fmt.Errorf("--namespace and --name are required")
+					}
+					namespaceID, err := idOf(app, ctx, "/api/ServiceBus/namespaces", "namespace", namespaceID)
+					if err != nil {
+						return err
 					}
 					path := "/api/ServiceBus/namespaces/" + namespaceID + "/queues"
 					if _, err := post(app, ctx, "POST", path, map[string]any{"name": name}); err != nil {
@@ -245,13 +257,17 @@ func serviceBusTopic() Topic {
 			},
 			{
 				Name: "topics", Summary: "List the topics in a namespace",
-				Flags: func(fs *flag.FlagSet) { fs.StringVar(&namespaceID, "namespace", "", "namespace id") },
+				Flags: func(fs *flag.FlagSet) { fs.StringVar(&namespaceID, "namespace", "", "namespace name or id") },
 				Run: func(ctx context.Context, app *App, args []string) error {
 					if namespaceID == "" && len(args) > 0 {
 						namespaceID = args[0]
 					}
 					if namespaceID == "" {
 						return fmt.Errorf("--namespace is required")
+					}
+					namespaceID, err := idOf(app, ctx, "/api/ServiceBus/namespaces", "namespace", namespaceID)
+					if err != nil {
+						return err
 					}
 					return get(app, ctx,
 						"/api/ServiceBus/namespaces/"+namespaceID+"/topics",

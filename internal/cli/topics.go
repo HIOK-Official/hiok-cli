@@ -340,7 +340,7 @@ func containerAppTopic() Topic {
 					fs.StringVar(&name, "name", "", "app name")
 					fs.StringVar(&image, "image", "", "container image")
 					fs.StringVar(&region, "region", "", "region")
-					fs.StringVar(&environmentID, "environment", "", "environment id to join")
+					fs.StringVar(&environmentID, "environment", "", "environment id to join (name or id)")
 					fs.IntVar(&targetPort, "port", 80, "port the app listens on")
 					fs.Float64Var(&vcpu, "vcpu", 0.5, "virtual CPUs")
 					fs.Float64Var(&ramGb, "ram", 1, "memory in GB")
@@ -353,6 +353,21 @@ func containerAppTopic() Topic {
 					}
 					if name == "" || image == "" {
 						return fmt.Errorf("--name and --image are required")
+					}
+					if environmentID != "" && !isGUID(environmentID) {
+						envs, err := app.Client.ContainerAppEnvironments(ctx)
+						if err != nil {
+							return err
+						}
+						for _, e := range envs {
+							if strings.EqualFold(str(e, "name"), environmentID) {
+								environmentID = str(e, "id")
+								break
+							}
+						}
+						if !isGUID(environmentID) {
+							return fmt.Errorf("no container app environment named %q", environmentID)
+						}
 					}
 					result, err := app.Client.CreateContainerApp(ctx, hiok.CreateContainerAppRequest{
 						Name: name, Image: image, Region: app.Region(region),
